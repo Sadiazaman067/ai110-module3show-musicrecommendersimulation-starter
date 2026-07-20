@@ -11,7 +11,7 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+This project is a small, content-based music recommender simulation. A listener is represented as a `UserProfile` (favorite genre, favorite mood, target energy, and whether they like acoustic songs), and an 18-song catalog is represented as `Song` objects with genre, mood, energy, tempo, valence, danceability, and acousticness. A weighted scoring rule compares the two directly — no play history or other users involved — and a separate ranking step sorts the whole catalog to return the top-k matches, each with a plain-language list of exactly why it scored the way it did. Testing it against several profiles, including two deliberately contradictory ones, showed both where the simple recipe works well (an internally consistent profile like "Chill Lofi" gets clean, intuitive results) and where it breaks down (exact-string genre matching can let a wrong-mood song outrank a better mood match just because it shares a genre label).
 
 ---
 
@@ -126,13 +126,11 @@ Top Recommendations
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
-
-Examples:
-
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
+- The catalog is tiny (18 songs) and most genres have exactly one representative, so once a user's exact genre is exhausted, the rest of the top-k list is filled in by energy-closeness alone, regardless of genre or mood fit.
+- Genre and mood are matched by exact string equality, not semantic closeness — related genres (e.g. "pop" vs. "indie pop") get zero credit for each other even though a listener would consider them similar. This is the single biggest limitation; see `model_card.md` for the experiment that confirmed it isn't just a weight-tuning problem.
+- The system has no concept of lyrics, language, instrumentation beyond the given numeric tags, or listening context (time of day, activity, device).
+- `UserProfile` only stores one favorite genre and one favorite mood, so it can't represent a listener with broad or mixed taste — it will systematically under-recommend to genre-diverse listeners.
+- The scoring rule can't detect an internally contradictory profile (e.g. wanting `mood=sad` and `energy=0.9` at the same time); it still confidently returns a ranked list instead of flagging the conflict.
 
 You will go deeper on this in your model card.
 
@@ -144,10 +142,11 @@ Read and complete `model_card.md`:
 
 [**Model Card**](model_card.md)
 
-Write 1 to 2 paragraphs here about what you learned:
+> **Draft — personalize before submitting.** The paragraphs below are a first pass grounded in what actually happened while building and testing this project; read them over and rewrite anything that doesn't sound like your own take.
 
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
+Building even this small a recommender made it clear that "recommendation" is really just a weighted sum, sorted. Every song became a small vector of numbers (genre, mood, energy, tempo, valence, danceability, acousticness), and the entire "algorithm" boiled down to comparing that vector to a user's stated preferences and adding up points. What surprised me was how much the *shape* of a comparison matters more than its exact weight — reworking the genre/energy weight ratio in an experiment didn't fix a bad recommendation (Gym Hero outranking Rooftop Lights for a "Happy Pop" listener), because the real problem was that genre was being compared with exact string equality instead of anything resembling closeness. That was a bigger lesson than I expected: a recommender's biases often live in *how* a comparison is defined, not just in how much weight it's given.
+
+Testing adversarial profiles showed me where unfairness can quietly creep in. A profile that wanted `mood=sad, energy=0.9` never surfaced the one song actually tagged "sad" near the top — it got buried under two upbeat pop songs that merely matched on energy, and the system never signaled that anything was wrong. In a real streaming app, a version of this same bias could mean a user with a niche or self-contradictory taste (or a taste the underlying data barely represents) just gets steered toward whatever is popular and "close enough" on the majority signal, without ever being told that's what's happening. That changed how I think about these systems — a ranked list looks authoritative even when it's built on a handful of brittle rules underneath.
 
 
 

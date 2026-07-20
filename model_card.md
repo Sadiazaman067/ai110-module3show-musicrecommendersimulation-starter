@@ -2,60 +2,35 @@
 
 ## 1. Model Name  
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+**VibeMatch 1.0**
 
 ---
 
 ## 2. Intended Use  
 
-Describe what your recommender is designed to do and who it is for. 
-
-Prompts:  
-
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+This is a classroom simulation, not a production recommender. It takes one hard-coded listener "taste profile" (favorite genre, favorite mood, target energy, and an acoustic preference) and ranks a small, fixed catalog of songs (`data/songs.csv`) by how well each one matches that profile. It assumes a listener's taste can be reasonably summarized by a single favorite genre and mood plus a numeric energy target — a real listener's taste is obviously richer than that, but the simplification keeps the scoring logic easy to trace and explain. It's meant for exploring how a content-based recommender turns song attributes and a stated preference into a ranked, explained list of results, not for recommending music to real users.
 
 ---
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+Every song in the catalog carries a handful of attributes: its genre, its mood, how energetic it is, its tempo, how positive it sounds (valence), how danceable it is, and how acoustic it is. A listener is represented the same simple way — a favorite genre, a favorite mood, a target energy level, and whether they like acoustic-sounding music.
 
-Prompts:  
+To score a song, the program checks whether the song's genre matches the listener's favorite genre and gives it 2 points if so, checks mood the same way for 1 point, and then looks at how close the song's energy is to the target energy — the closer, the more of a possible 1 point it earns, whether the song's energy is above or below the target. If the listener likes acoustic music and the song is acoustic enough, it gets a small half-point bonus on top. Every song in the catalog gets scored this way, then the whole list is sorted from highest to lowest score and the top handful are shown, along with a plain-language list of exactly which bonuses each song earned.
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
-
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+The starter file had all of this stubbed out with `TODO`s and placeholder return values (`return []`, `return self.songs[:k]`) — the genre/mood matching, the energy-closeness math, the sorting, and the human-readable explanation strings are all things I designed and implemented on top of the starter scaffold.
 
 ---
 
 ## 4. Data  
 
-Describe the dataset the model uses.  
-
-Prompts:  
-
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+The catalog started as the 10 songs in the starter `data/songs.csv` and I expanded it to 18 by adding 8 more songs, specifically chosen to cover genres and moods the original set didn't have: R&B, punk, country, classical, reggaeton, blues, hip-hop, and folk, with moods like romantic, angry, nostalgic, sad, playful, lonesome, confident, and peaceful. Even at 18 songs, most genres still have only one representative, so an exact-genre match usually narrows the catalog down to just one or two candidates. Missing entirely from the dataset: anything about lyrics, language, vocal style, or cultural/regional context — "mood" and "genre" are single hand-picked labels per song rather than something derived from the actual audio or text, so two songs tagged with the same mood could still sound very different in practice.
 
 ---
 
 ## 5. Strengths  
 
-Where does your system seem to work well  
-
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+The system does well on profiles that are internally consistent — a "Chill Lofi" listener (genre=lofi, mood=chill, low target energy, likes acoustic) gets a clean top-2 of actual lofi/chill songs with near-maximum scores, which matches intuition exactly. It also correctly separates very different listener types: a "Deep Intense Rock" profile and a "High-Energy Pop" profile produce completely different #1 picks, showing that the genre+mood+energy combination is doing real discriminating work rather than returning the same songs regardless of input. The reasons list is also a genuine strength — seeing "genre match (+2.0); mood match (+1.0); energy closeness (+0.92)" next to every recommendation makes it easy to audit *why* a song ranked where it did, which is exactly what surfaced the genre-matching bias described below.
 
 ---
 
@@ -204,23 +179,12 @@ Profile: Adversarial: Punk Genre, Peaceful Mood  {'genre': 'punk', 'mood': 'peac
 
 ## 8. Future Work  
 
-Ideas for how you would improve the model next.  
-
-Prompts:  
-
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+The clearest next step is to replace exact-string genre matching with some notion of genre *similarity* — a small genre-family map (e.g. "indie pop" partially overlapping with "pop") would fix the Gym Hero/Rooftop Lights problem directly, since the weight-shift experiment showed that reweighting alone can't fix it. I'd also want `UserProfile` to support more than one favorite genre/mood, or a fuller attribute vector instead of two categorical picks, so it can represent listeners with broader taste. Better handling of contradictory profiles would help too — even a simple check that warns "no songs closely match both your mood and energy target" would be more honest than silently returning a top-5 anyway. Finally, growing the catalog and adding a diversity rule (so the top-k isn't dominated by one artist or genre when scores are close) would make results feel less repetitive.
 
 ---
 
 ## 9. Personal Reflection  
 
-A few sentences about your experience.  
+> **Draft — personalize before submitting.** Rewrite this in your own words; it's a first pass based on what actually happened while building this.
 
-Prompts:  
-
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+Working through this made recommender systems feel a lot less like magic and a lot more like a spreadsheet with extra steps — a handful of numeric comparisons, added up and sorted. What stuck with me most was the weight-shift experiment: I expected that tuning the genre-vs-energy weights would resolve the Gym Hero/Rooftop Lights problem, and it didn't, because the actual issue was that genre was being compared with `==` instead of something that understood "indie pop" and "pop" are related. That's a small thing in an 18-song catalog, but it made me realize that in a real system with millions of songs and users, a similar mismatch between how categories are defined and how listeners actually think about them could explain a lot of the "why does it keep recommending this" frustration people have with real apps. It also made me more skeptical of ranked lists in general — this recommender never once said "I'm not sure" or "these don't really fit," even when I gave it a deliberately contradictory profile; it just quietly produced a confident-looking top 5 anyway.
