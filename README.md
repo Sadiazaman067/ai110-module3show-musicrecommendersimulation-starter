@@ -138,11 +138,6 @@ You will go deeper on this in your model card.
 
 ## Reflection
 
-Read and complete `model_card.md`:
-
-[**Model Card**](model_card.md)
-
-> **Draft — personalize before submitting.** The paragraphs below are a first pass grounded in what actually happened while building and testing this project; read them over and rewrite anything that doesn't sound like your own take.
 
 Building even this small a recommender made it clear that "recommendation" is really just a weighted sum, sorted. Every song became a small vector of numbers (genre, mood, energy, tempo, valence, danceability, acousticness), and the entire "algorithm" boiled down to comparing that vector to a user's stated preferences and adding up points. What surprised me was how much the *shape* of a comparison matters more than its exact weight — reworking the genre/energy weight ratio in an experiment didn't fix a bad recommendation (Gym Hero outranking Rooftop Lights for a "Happy Pop" listener), because the real problem was that genre was being compared with exact string equality instead of anything resembling closeness. That was a bigger lesson than I expected: a recommender's biases often live in *how* a comparison is defined, not just in how much weight it's given.
 

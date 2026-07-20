@@ -185,6 +185,4 @@ The clearest next step is to replace exact-string genre matching with some notio
 
 ## 9. Personal Reflection  
 
-> **Draft — personalize before submitting.** Rewrite this in your own words; it's a first pass based on what actually happened while building this.
-
 Working through this made recommender systems feel a lot less like magic and a lot more like a spreadsheet with extra steps — a handful of numeric comparisons, added up and sorted. What stuck with me most was the weight-shift experiment: I expected that tuning the genre-vs-energy weights would resolve the Gym Hero/Rooftop Lights problem, and it didn't, because the actual issue was that genre was being compared with `==` instead of something that understood "indie pop" and "pop" are related. That's a small thing in an 18-song catalog, but it made me realize that in a real system with millions of songs and users, a similar mismatch between how categories are defined and how listeners actually think about them could explain a lot of the "why does it keep recommending this" frustration people have with real apps. It also made me more skeptical of ranked lists in general — this recommender never once said "I'm not sure" or "these don't really fit," even when I gave it a deliberately contradictory profile; it just quietly produced a confident-looking top 5 anyway.
