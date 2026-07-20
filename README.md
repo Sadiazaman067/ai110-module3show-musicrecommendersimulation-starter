@@ -117,11 +117,10 @@ Top Recommendations
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+**Weight shift — genre 2.0 → 1.0, energy 1.0 → 2.0.** Tested on the "High-Energy Pop" profile (`genre=pop, mood=happy, energy=0.9`), where the baseline recipe ranked *Gym Hero* (pop/intense) above *Rooftop Lights* (indie pop/happy) — the mood match lost to the genre match. After halving genre's weight and doubling energy's, Gym Hero (2.94) *still* narrowly beat Rooftop Lights (2.72). This told me the ordering wasn't sensitive to that weight ratio at all — the real cause is that genre matching is exact-string equality (`"indie pop" != "pop"`), so no amount of reweighting can give Rooftop Lights credit for being genre-*adjacent*. The change made the scores different, but not more accurate; a real fix would need genre-similarity matching, not different point values. Weights were reverted back to the original recipe (genre 2.0, mood 1.0, energy 1.0) after the test.
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+- Tested five profiles end-to-end (three typical listeners, two adversarial/contradictory ones) — full output and analysis in `model_card.md` > Evaluation.
+- Confirmed the scoring rule has no way to detect an internally contradictory profile (e.g. `mood=sad, energy=0.9`): it still returns a confident top-5, burying the one real mood match behind unrelated high-energy songs.
 
 ---
 
